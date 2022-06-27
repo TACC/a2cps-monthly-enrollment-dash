@@ -1,59 +1,65 @@
-import dash
-from dash.dependencies import Input, Output
-import dash_core_components as dcc
-import dash_html_components as html
+# ----------------------------------------------------------------------------
+# PYTHON LIBRARIES
+# ----------------------------------------------------------------------------
+# Dash Framework
+import dash_bootstrap_components as dbc
+import dash_daq as daq
+from dash import Dash, callback, clientside_callback, html, dcc, dash_table, Input, Output, State, MATCH, ALL
+from dash.exceptions import PreventUpdate
 
-import flask
-import pandas as pd
-import time
-import os
+# import local modules
+from config_settings import *
+from data_processing import *
+from make_components import *
+from styling import *
 
-server = flask.Flask('app')
-server.secret_key = os.environ.get('secret_key', 'secret')
 
-df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/hello-world-stock.csv')
+# ----------------------------------------------------------------------------
+# APP Settings
+# ----------------------------------------------------------------------------
 
-app = dash.Dash('app', server=server)
+external_stylesheets_list = [dbc.themes.SANDSTONE] #  set any external stylesheets
 
-app.scripts.config.serve_locally = False
-dcc._js_dist[0]['external_url'] = 'https://cdn.plot.ly/plotly-basic-latest.min.js'
+app = Dash(__name__,
+                external_stylesheets=external_stylesheets_list,
+                meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}],
+                assets_folder=ASSETS_PATH,
+                requests_pathname_prefix=REQUESTS_PATHNAME_PREFIX,
+                )
 
-app.layout = html.Div([
-    html.H1('Stock Tickers'),
-    dcc.Dropdown(
-        id='my-dropdown',
-        options=[
-            {'label': 'Tesla', 'value': 'TSLA'},
-            {'label': 'Apple', 'value': 'AAPL'},
-            {'label': 'Coke', 'value': 'COKE'}
-        ],
-        value='TSLA'
-    ),
-    dcc.Graph(id='my-graph')
-], className="container")
 
-@app.callback(Output('my-graph', 'figure'),
-              [Input('my-dropdown', 'value')])
-def update_graph(selected_dropdown_value):
-    dff = df[df['Stock'] == selected_dropdown_value]
-    return {
-        'data': [{
-            'x': dff.Date,
-            'y': dff.Close,
-            'line': {
-                'width': 3,
-                'shape': 'spline'
-            }
-        }],
-        'layout': {
-            'margin': {
-                'l': 30,
-                'r': 20,
-                'b': 30,
-                't': 20
-            }
-        }
-    }
+# ----------------------------------------------------------------------------
+# DASH APP LAYOUT FUNCTION
+# ----------------------------------------------------------------------------
+def create_content():
+    content = html.Div([
+        html.P('The content of your App will go here.')
+    ])
+    return content
+
+def serve_layout():
+    try:
+        page_layout = html.Div(
+            create_content()
+        )
+    except:
+        page_layout = html.Div(['There has been a problem accessing the data for this application.'])
+    return page_layout
+
+app.layout = serve_layout
+
+
+# ----------------------------------------------------------------------------
+# DATA CALLBACKS
+# ----------------------------------------------------------------------------
+
+# Add callbacks to respond to user input here
+
+# ----------------------------------------------------------------------------
+# RUN APPLICATION
+# ----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
+else:
+    server = app.server
