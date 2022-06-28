@@ -279,7 +279,7 @@ def enrollment_rollup(enrollment_df, index_col, grouping_cols, count_col_name, c
     return enrollment_count
 
 def get_site_enrollments(enrollment_count, mcc):
-    site_enrollments = enrollment_count[enrollment_count.mcc == mcc]
+    site_enrollments = enrollment_count[enrollment_count.mcc == mcc].copy()
     replace_string = 'MCC'+str(mcc)+': '
     site_enrollments['Site'] = site_enrollments['Site'].str.replace(replace_string,'')
     site_enrollments = pd.pivot(site_enrollments, index=['obtain_month'], columns = 'Site', values=['Monthly','Cumulative'])
