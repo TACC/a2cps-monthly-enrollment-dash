@@ -1,9 +1,6 @@
 # ----------------------------------------------------------------------------
 # PYTHON LIBRARIES
 # ----------------------------------------------------------------------------
-import traceback
-
-# Dash Framework
 import dash_bootstrap_components as dbc
 from dash import Dash, callback, clientside_callback, html, dcc, dash_table as dt, Input, Output, State, MATCH, ALL
 from dash.exceptions import PreventUpdate
@@ -12,9 +9,11 @@ import dash_daq as daq
 from dash_extensions import Download
 from dash_extensions.snippets import send_file
 
+
 # import local modules
 from config_settings import *
 from data_processing import *
+
 from styling import *
 
 # for export
@@ -29,6 +28,7 @@ import plotly.graph_objects as go
 # ----------------------------------------------------------------------------
 
 
+
 # ----------------------------------------------------------------------------
 # APP Settings
 # ----------------------------------------------------------------------------
@@ -41,6 +41,7 @@ app = Dash(__name__,
                 assets_folder=ASSETS_PATH,
                 requests_pathname_prefix=REQUESTS_PATHNAME_PREFIX,
                 suppress_callback_exceptions=True
+
                 )
 
 
@@ -234,9 +235,11 @@ def serve_layout():
         )
     ], style=TACC_IFRAME_SIZE
     )
+
     return page_layout
 
 app.layout = serve_layout
+
 
 # ----------------------------------------------------------------------------
 # DATA CALLBACKS
@@ -248,7 +251,6 @@ app.layout = serve_layout
 # ----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    app.run_server()
-    # app.run_server(debug=True, port=8020)dev
+    app.run_server(debug=True)
 else:
     server = app.server
