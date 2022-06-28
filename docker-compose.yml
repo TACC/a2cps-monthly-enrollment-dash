@@ -4,7 +4,8 @@
 version: "3"
 services:
   a2cps_monthly_enrollment_dash:
-    image: wmatacc/a2cps-monthly-enrollment-dash:latest
+    #image: wmatacc/a2cps-monthly-enrollment-dash:latest
+    build: .
     ports:
       - 8050:8050
     container_name: a2cps_monthly_enrollment_dash
