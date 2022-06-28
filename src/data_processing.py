@@ -133,29 +133,36 @@ def get_display_dictionary(display_terms, api_field, api_value, display_col):
 # DATA LOADING
 # ----------------------------------------------------------------------------
 def get_subjects_json(report, report_suffix,  file_url_root=None, mcc_list =[1,2], source='url', DATA_PATH = None):
+    subjects_json = {}
     try:
-        subjects_json = {}
-        # Read files into json
-        if source == 'url':
-            for mcc in mcc_list:
-                json_url = '/'.join([file_url_root, report,report_suffix.replace('[mcc]',str(mcc))])
-                r = requests.get(json_url)
-                if r.status_code == 200:
-                # TO DO: add an else statement to use local files if the request fails
-                    mcc_json = r.json()
-                    subjects_json[mcc] = mcc_json
-        else:
-            print(source)
-            for mcc in mcc_list:
-                mcc_filename = ''.join(['subjects-',str(mcc),'-latest.json'])
-                mcc_filepath = os.path.join(DATA_PATH, mcc_filename)
-                with open(mcc_filepath, 'r') as f:
-                    subjects_json[mcc] = json.load(f)
-        return subjects_json
+        # Read files into json from API
+        for mcc in mcc_list:
+            json_url = '/'.join([file_url_root, report,report_suffix.replace('[mcc]',str(mcc))])
+            r = requests.get(json_url)
+            if r.status_code == 200:
+            # TO DO: add an else statement to use local files if the request fails
+                mcc_json = r.json()
+                subjects_json[mcc] = mcc_json
+        data_source = 'API'
+        data_date = datetime.now().strftime('%m/%d/%Y')
+        # for mcc in mcc_list:
+        #     mcc_filename = ''.join(['subjects-',str(mcc),'-latest.json'])
+        #     mcc_filepath = os.path.join(DATA_PATH, mcc_filename)
+        #     with open(mcc_filepath, 'r') as f:
+        #         subjects_json[mcc] = json.load(f)
+        # data_source = 'local files'
+        # data_date = datetime.now().strftime('%m/%d/%Y')
+    except:
+        #load local files if API failss
+        for mcc in mcc_list:
+            mcc_filename = ''.join(['subjects-',str(mcc),'-latest.json'])
+            mcc_filepath = os.path.join(DATA_PATH, mcc_filename)
+            with open(mcc_filepath, 'r') as f:
+                subjects_json[mcc] = json.load(f)
+        data_source = 'local files'
+        data_date = datetime.now().strftime('%m/%d/%Y')
 
-    except Exception as e:
-        traceback.print_exc()
-        return {'data':'not found'}
+    return subjects_json, data_source, data_date
 
 
 def combine_mcc_json(mcc_json):
@@ -270,6 +277,8 @@ def enrollment_rollup(enrollment_df, index_col, grouping_cols, count_col_name, c
 
 def get_site_enrollments(enrollment_count, mcc):
     site_enrollments = enrollment_count[enrollment_count.mcc == mcc]
+    replace_string = 'MCC'+str(mcc)+': '
+    site_enrollments['Site'] = site_enrollments['Site'].str.replace(replace_string,'')
     site_enrollments = pd.pivot(site_enrollments, index=['obtain_month'], columns = 'Site', values=['Monthly','Cumulative'])
     site_enrollments = site_enrollments.swaplevel(0,1, axis=1).sort_index(1).reindex(['Monthly','Cumulative'], level=1, axis=1).reset_index()
     site_enrollments['Month'] = site_enrollments['obtain_month'].dt.strftime("%B")
