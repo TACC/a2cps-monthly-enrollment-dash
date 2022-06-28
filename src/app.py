@@ -128,106 +128,102 @@ def serve_layout():
 
     # Run Data Calls
     # print(os.path.join(DATA_PATH,'test_file.txt'))
-    subjects_json = get_subjects_json(report, report_suffix,file_url_root, mcc_list =[1,2], source='url', DATA_PATH = DATA_PATH)
-    enrolled = get_enrolled(subjects_json, screening_sites, display_terms_dict, display_terms_dict_multi)
+    # try:
+    subjects_json, data_source, data_date = get_subjects_json(report, report_suffix,file_url_root, mcc_list =[1,2],  DATA_PATH = DATA_PATH)
+    page_meta_dict['data_source'] = data_source
+    page_meta_dict['data_date'] = data_date
+    # except:
+    #     subjects_json = get_subjects_json(report, report_suffix,file_url_root, mcc_list =[1,2], source='local', DATA_PATH = DATA_PATH)
+    #     page_meta_dict['data_source'] = 'loca data files'
+    #     page_meta_dict['data_date'] = '06/15/2022'
 
+    print(page_meta_dict['data_source'])
+    print(page_meta_dict['data_date'])
 
-    enrollment_count = enrollment_rollup(enrolled, 'obtain_month', ['mcc','screening_site','surgery_type','Site'], 'Monthly')
-    #
-    mcc1_enrollments = get_site_enrollments(enrollment_count, 1).reset_index()
-    # print(mcc1_enrollments)
-    mcc2_enrollments = get_site_enrollments(enrollment_count, 2).reset_index()
-    # print(mcc2_enrollments)
+    if subjects_json:
+    ### DATA PROCESSING
+        enrolled = get_enrolled(subjects_json, screening_sites, display_terms_dict, display_terms_dict_multi)
+        enrollment_count = enrollment_rollup(enrolled, 'obtain_month', ['mcc','screening_site','surgery_type','Site'], 'Monthly')
+        mcc1_enrollments = get_site_enrollments(enrollment_count, 1).reset_index()
+        mcc2_enrollments = get_site_enrollments(enrollment_count, 2).reset_index()
+        enrollment_expectations_df = get_enrollment_expectations()
+        monthly_expectations = get_enrollment_expectations_monthly(enrollment_expectations_df)
+        summary_rollup = rollup_enrollment_expectations(enrolled, enrollment_expectations_df, monthly_expectations)
+        summary_options_list = [(x, y) for x in summary_rollup.mcc.unique() for y in summary_rollup.surgery_type.unique()]
+        tab_summary_content_children = []
+        for tup in summary_options_list:
+            tup_summary = summary_rollup[(summary_rollup.mcc == tup[0]) & (summary_rollup.surgery_type == tup[1])]
+            if len(tup_summary) > 0:
+                table_cols = ['Date: Year', 'Date: Month', 'Actual: Monthly', 'Actual: Cumulative',
+                                'Expected: Monthly', 'Expected: Cumulative', 'Percent: Monthly','Percent: Cumulative']
+                tup_stup_table_df = convert_to_multindex(tup_summary[table_cols])
+                table_id = 'table_mcc'+str(tup[0])+'_'+tup[1]
+                tup_table = build_datatable_multi(tup_stup_table_df, table_id)
+            else:
+                tup_message = 'There is currently no data for ' + tup[1] + ' surgeries at MCC' + str(tup[0])
+                tup_table = html.Div(tup_message)
+            tup_section = html.Div([
+                html.H2('MCC' + str(tup[0]) + ': ' + tup[1]),
+                html.Div(tup_table)
+            ], style={'margin-bottom':'20px'})
+            tab_summary_content_children.append(tup_section)
 
-    enrollment_expectations_df = get_enrollment_expectations()
-    # print(enrollment_expectations_df)
-    monthly_expectations = get_enrollment_expectations_monthly(enrollment_expectations_df)
-    # print(monthly_expectations)
-    summary_rollup = rollup_enrollment_expectations(enrolled, enrollment_expectations_df, monthly_expectations)
-    print(summary_rollup)
-    summary_options_list = [(x, y) for x in summary_rollup.mcc.unique() for y in summary_rollup.surgery_type.unique()]
-    tab_summary_content_children = []
-    for tup in summary_options_list:
-        tup_summary = summary_rollup[(summary_rollup.mcc == tup[0]) & (summary_rollup.surgery_type == tup[1])]
-        if len(tup_summary) > 0:
-            table_cols = ['Date: Year', 'Date: Month', 'Actual: Monthly', 'Actual: Cumulative',
-                            'Expected: Monthly', 'Expected: Cumulative', 'Percent: Monthly','Percent: Cumulative']
-            tup_stup_table_df = convert_to_multindex(tup_summary[table_cols])
-            table_id = 'table_mcc'+str(tup[0])+'_'+tup[1]
-            # tup_table = html.Div(json.dump(tup_stup_table_df.to_dict('records')))
-            tup_table = build_datatable_multi(tup_stup_table_df, table_id)
-        else:
-            tup_message = 'There is currently no data for ' + tup[1] + ' surgeries at MCC' + str(tup[0])
-            tup_table = html.Div(tup_message)
+    ### BUILD PAGE COMPONENTS
+        data_source = 'Data Source: ' + page_meta_dict['data_source']
+        data_date = 'Data Date: ' + page_meta_dict['data_date']
 
-        print(tup_summary)
-        print(tup[1])
-        tup_section = html.Div([
-            html.H2('MCC' + str(tup[0]) + ': ' + tup[1]),
-            html.Div(tup_table)
-        ], style={'margin-bottom':'20px'})
-        tab_summary_content_children.append(tup_section)
-    # summary_sites = list(summary_rollup.Site.unique())
-    # datatables = {}
-    # for site in summary_sites:
-    #     subset_df = summary_rollup[summary_rollup.Site==site].drop(['Site'],axis=1)
-    #     subset_df_mi = convert_to_multindex(subset_df)
-    #     table_columns, table_data = datatable_settings_multiindex(subset_df_mi)
-    #
-    #     site_dict = {
-    #         'table_id': 'table_' + site.replace(" ", "_"),
-    #         'table_columns': table_columns,
-    #         'table_data':table_data
-    #     }
-    #     datatables[site] = site_dict
+        tab_enrollments = html.Div([
+            html.H2('MCC 1'),
+            build_datatable_multi(mcc1_enrollments, 'mcc1_datatable'),
+            html.H2('MCC 2'),
+            build_datatable_multi(mcc2_enrollments, 'mcc2_datatable')
+            ])
 
+        tab_summary_content = html.Div(
+            tab_summary_content_children
+        )
 
-    tab_enrollments = html.Div([
-        html.H2('MCC 1'),
-        build_datatable_multi(mcc1_enrollments, 'mcc1_datatable'),
-        html.H2('MCC 2'),
-        build_datatable_multi(mcc2_enrollments, 'mcc2_datatable')
-        ])
+        tabs = html.Div([
+                    dcc.Tabs(id='tabs_tables', children=[
+                        dcc.Tab(label='Site Enrollments', id='tab_1', children=[
+                            html.Div([tab_enrollments], id='section_1'),
+                        ]),
+                        dcc.Tab(label="Site / Surgery Summary", id='tab_3', children=[
+                            html.Div([tab_summary_content], id='section_3'),
+                        ]),
 
-    tab_summary_content = html.Div(
-        tab_summary_content_children
-    )
-
-    tabs = html.Div([
-                dcc.Tabs(id='tabs_tables', children=[
-                    dcc.Tab(label='Site Enrollments', id='tab_1', children=[
-                        html.Div([tab_enrollments], id='section_1'),
                     ]),
-                    dcc.Tab(label="Site / Surgery Summary", id='tab_3', children=[
-                        html.Div([tab_summary_content], id='section_3'),
-                    ]),
-
-                ]),
-                ])
+                    ])
+    else:
+        data_source = 'unavailable'
+        data_date = 'unavailable'
+        tabs = 'Data unavailable'
 
     page_layout = html.Div([
-        # dcc.Store(id='store_meta', data = page_meta_dict),
-        # dcc.Store(id='store_enrollment', data = enrollment_dict),
 
         html.Div(
             [
-                tabs,
-                # html.Row([
-                #     html.Div(json.dumps(datatables[site])) for site in summary_sites
-                #     ]),
+                dbc.Row([
+                    dbc.Col([
+                        html.H1('Enrollment Report', style={'textAlign': 'center'})
+                    ], width=12),
+                ]),
 
+                dbc.Row([
+                    dbc.Col([
+                        html.P(data_source),
+                    ], width=6),
+                    dbc.Col([
+                        html.P(data_date),
+                    ], width=6, style={'text-align': 'right'}),
+                ]),
 
-                # html.Row([
-                #     html.Col([
-                #         html.Div(build_datatable(convert_to_multindex(summary_rollup), 'summary_multi')),
-                #     ],width=6),
-                #     html.Col([],width=6)
-                # ])
-                # html.Div(build_datatable(summary_rollup, 'summary_rollup', multi=False)),
-                # html.Div([
-                #     build_datatable(summary_rollup, 'summary_rollup', multi=False)
-                #     # build_datatable_multi(summary_rollup[summary_rollup.Site==site], ('summary_table_' + site)) for site in list(summary_rollup.Site.unique())
-                # ])
+                dbc.Row([
+                    dbc.Col([
+                        tabs,
+                    ])
+                    ]),
+
             ]
         ,id='report_content'
         , style =CONTENT_STYLE
@@ -244,7 +240,6 @@ app.layout = serve_layout
 # ----------------------------------------------------------------------------
 # DATA CALLBACKS
 # ----------------------------------------------------------------------------
-
 
 
 # ----------------------------------------------------------------------------
