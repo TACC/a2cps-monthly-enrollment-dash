@@ -1,5 +1,7 @@
+
  # Libraries
 import traceback
+
 # Data
 # File Management
 import os # Operating system library
@@ -9,6 +11,7 @@ import requests
 import math
 import numpy as np
 import pandas as pd # Dataframe manipulations
+
 import sqlite3
 import datetime
 from datetime import datetime, timedelta
@@ -340,3 +343,4 @@ def rollup_enrollment_expectations(enrollment_df, enrollment_expectations_df, mo
     ee_rollup['Date: Month'] = ee_rollup['Month'].dt.strftime("%B")
 
     return ee_rollup
+
