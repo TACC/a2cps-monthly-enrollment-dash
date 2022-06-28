@@ -199,35 +199,39 @@ def serve_layout():
         tabs = 'Data unavailable'
 
     page_layout = html.Div([
+        dcc.Loading(
+            id="loading-2",
+            children=[
+                html.Div(
+        [
+            dbc.Row([
+                dbc.Col([
+                    html.H1('Enrollment Report', style={'textAlign': 'center'})
+                ], width=12),
+            ]),
 
-        html.Div(
-            [
-                dbc.Row([
-                    dbc.Col([
-                        html.H1('Enrollment Report', style={'textAlign': 'center'})
-                    ], width=12),
+            dbc.Row([
+                dbc.Col([
+                    html.P(data_source),
+                ], width=6),
+                dbc.Col([
+                    html.P(data_date),
+                ], width=6, style={'text-align': 'right'}),
+            ]),
+
+            dbc.Row([
+                dbc.Col([
+                    tabs,
+                ])
                 ]),
 
-                dbc.Row([
-                    dbc.Col([
-                        html.P(data_source),
-                    ], width=6),
-                    dbc.Col([
-                        html.P(data_date),
-                    ], width=6, style={'text-align': 'right'}),
-                ]),
-
-                dbc.Row([
-                    dbc.Col([
-                        tabs,
-                    ])
-                    ]),
-
-            ]
-        ,id='report_content'
-        , style =CONTENT_STYLE
+        ]
+    ,id='report_content'
+    , style =CONTENT_STYLE
+    )
+            ],
+            type="circle",
         )
-
     ], style=TACC_IFRAME_SIZE
     )
     return page_layout
@@ -244,6 +248,7 @@ app.layout = serve_layout
 # ----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8020)
+    app.run_server()
+    # app.run_server(debug=True, port=8020)dev
 else:
     server = app.server
