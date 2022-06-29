@@ -1,5 +1,7 @@
+
  # Libraries
 import traceback
+
 # Data
 # File Management
 import os # Operating system library
@@ -9,6 +11,7 @@ import requests
 import math
 import numpy as np
 import pandas as pd # Dataframe manipulations
+
 import sqlite3
 import datetime
 from datetime import datetime, timedelta
@@ -344,6 +347,7 @@ def rollup_enrollment_expectations(enrollment_df, enrollment_expectations_df, mo
 
     return ee_rollup
 
+
 def get_plot_date(enrollment_df, summary_rollup):
     cols = ['Month', 'mcc', 'surgery_type', 'Expected: Monthly', 'Expected: Cumulative']
     expected_data = summary_rollup[cols].copy()
@@ -351,7 +355,7 @@ def get_plot_date(enrollment_df, summary_rollup):
     expected_data['type'] = 'Expected'
     ec= enrollment_rollup(enrollment_df, 'obtain_month', ['mcc','surgery_type'], 'Monthly').rename(columns={'obtain_month':'Month'})
     ec['type'] = 'Actual'
-    df = ec.append(expected_data, ignore_index=True)
+    df = ec.append(expected_data, ignore_indennnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnx=True)
     df['Month'] = df['Month'].apply(lambda x: x.to_timestamp())
 
     return df
