@@ -22,7 +22,8 @@ import io
 import flask
 
 # Plotly graphing
-import plotly.graph_objects as go
+# import plotly.graph_objects as go
+import plotly.express as px
 
 # ----------------------------------------------------------------------------
 # DEBUGGING
@@ -101,11 +102,6 @@ def build_datatable(table_id, table_columns, table_data, fill_width = False):
         return None
 
 # ----------------------------------------------------------------------------
-# TABS
-# ----------------------------------------------------------------------------
-
-
-# ----------------------------------------------------------------------------
 # DASH APP LAYOUT FUNCTION
 # ----------------------------------------------------------------------------
 def serve_layout():
@@ -131,6 +127,8 @@ def serve_layout():
     subjects_json, data_source, data_date = get_subjects_json(report, report_suffix,file_url_root, mcc_list =[1,2],  DATA_PATH = DATA_PATH)
     page_meta_dict['data_source'] = data_source
     page_meta_dict['data_date'] = data_date
+    print(data_source)
+    print(data_date)
     # except:
     #     subjects_json = get_subjects_json(report, report_suffix,file_url_root, mcc_list =[1,2], source='local', DATA_PATH = DATA_PATH)
     #     page_meta_dict['data_source'] = 'loca data files'
@@ -148,23 +146,42 @@ def serve_layout():
         enrollment_expectations_df = get_enrollment_expectations()
         monthly_expectations = get_enrollment_expectations_monthly(enrollment_expectations_df)
         summary_rollup = rollup_enrollment_expectations(enrolled, enrollment_expectations_df, monthly_expectations)
+        expected_plot_df = get_plot_date(enrolled, summary_rollup)
         summary_options_list = [(x, y) for x in summary_rollup.mcc.unique() for y in summary_rollup.surgery_type.unique()]
         tab_summary_content_children = []
         for tup in summary_options_list:
             tup_summary = summary_rollup[(summary_rollup.mcc == tup[0]) & (summary_rollup.surgery_type == tup[1])]
+            plot_df = expected_plot_df[(expected_plot_df.mcc == tup[0]) & (expected_plot_df.surgery_type == tup[1])]
+
             if len(tup_summary) > 0:
                 table_cols = ['Date: Year', 'Date: Month', 'Actual: Monthly', 'Actual: Cumulative',
                                 'Expected: Monthly', 'Expected: Cumulative', 'Percent: Monthly','Percent: Cumulative']
                 tup_stup_table_df = convert_to_multindex(tup_summary[table_cols])
-                table_id = 'table_mcc'+str(tup[0])+'_'+tup[1]
+                table_id = 'table_mcc'+ str(tup[0])+'_'+tup[1]
+                figure_id = 'figure_mcc'+ str(tup[0])+'_'+tup[1]
                 tup_table = build_datatable_multi(tup_stup_table_df, table_id)
+                plot_title = 'Cumulative enrollment: MCC' + str(tup[0])+' ('+tup[1] +')'
+                tup_fig = px.line(plot_df, x="Month", y="Cumulative", title=plot_title, color = 'type')
+                tup_fig_div = dcc.Graph(figure = tup_fig, id=figure_id)
             else:
                 tup_message = 'There is currently no data for ' + tup[1] + ' surgeries at MCC' + str(tup[0])
                 tup_table = html.Div(tup_message)
+                tup_fig_div = html.Div()
+
             tup_section = html.Div([
-                html.H2('MCC' + str(tup[0]) + ': ' + tup[1]),
-                html.Div(tup_table)
+                dbc.Row([
+                    dbc.Col([html.H2('MCC' + str(tup[0]) + ': ' + tup[1]),])
+                ]),
+                dbc.Row([
+                    dbc.Col([html.Div(tup_table)])
+                ]),
+                dbc.Row([
+                    dbc.Col([html.Div(tup_fig_div)])
+                ]),
+
+
             ], style={'margin-bottom':'20px'})
+
             tab_summary_content_children.append(tup_section)
 
     ### BUILD PAGE COMPONENTS
@@ -203,29 +220,29 @@ def serve_layout():
             id="loading-2",
             children=[
                 html.Div(
-        [
-            dbc.Row([
-                dbc.Col([
-                    html.H1('Enrollment Report', style={'textAlign': 'center'})
-                ], width=12),
-            ]),
-
-            dbc.Row([
-                dbc.Col([
-                    html.P(data_source),
-                ], width=6),
-                dbc.Col([
-                    html.P(data_date),
-                ], width=6, style={'text-align': 'right'}),
-            ]),
-
-            dbc.Row([
-                dbc.Col([
-                    tabs,
-                ])
+            [
+                dbc.Row([
+                    dbc.Col([
+                        html.H1('Enrollment Report', style={'textAlign': 'center'})
+                    ], width=12),
                 ]),
 
-        ]
+                dbc.Row([
+                    dbc.Col([
+                        html.P(data_source),
+                    ], width=6),
+                    dbc.Col([
+                        html.P(data_date),
+                    ], width=6, style={'text-align': 'right'}),
+                ]),
+
+                dbc.Row([
+                    dbc.Col([
+                        tabs,
+                    ])
+                    ]),
+
+            ]
     ,id='report_content'
     , style =CONTENT_STYLE
     )

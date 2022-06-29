@@ -132,7 +132,7 @@ def get_display_dictionary(display_terms, api_field, api_value, display_col):
 # ----------------------------------------------------------------------------
 # DATA LOADING
 # ----------------------------------------------------------------------------
-def get_subjects_json(report, report_suffix,  file_url_root=None, mcc_list =[1,2], source='url', DATA_PATH = None):
+def get_subjects_json(report, report_suffix,  file_url_root=None, mcc_list =[1,2], DATA_PATH = None):
     subjects_json = {}
     try:
         # Read files into json from API
@@ -145,13 +145,14 @@ def get_subjects_json(report, report_suffix,  file_url_root=None, mcc_list =[1,2
                 subjects_json[mcc] = mcc_json
         data_source = 'API'
         data_date = datetime.now().strftime('%m/%d/%Y')
+
         # for mcc in mcc_list:
         #     mcc_filename = ''.join(['subjects-',str(mcc),'-latest.json'])
         #     mcc_filepath = os.path.join(DATA_PATH, mcc_filename)
         #     with open(mcc_filepath, 'r') as f:
         #         subjects_json[mcc] = json.load(f)
         # data_source = 'local files'
-        # data_date = datetime.now().strftime('%m/%d/%Y')
+        # data_date = '06/15/2022'
     except:
         #load local files if API failss
         for mcc in mcc_list:
@@ -160,7 +161,7 @@ def get_subjects_json(report, report_suffix,  file_url_root=None, mcc_list =[1,2
             with open(mcc_filepath, 'r') as f:
                 subjects_json[mcc] = json.load(f)
         data_source = 'local files'
-        data_date = datetime.now().strftime('%m/%d/%Y')
+        data_date = '06/15/2022'
 
     return subjects_json, data_source, data_date
 
@@ -261,13 +262,6 @@ def get_enrolled(subjects_json, screening_sites, display_terms_dict, display_ter
 # Enrollment FUNCTIONS
 # ----------------------------------------------------------------------------
 
-# def get_enrollment_data(consented):
-#     enroll_cols = ['record_id','main_record_id','obtain_date','mcc', 'screening_site', 'surgery_type',]
-#     enrolled = consented[consented['ewdateterm'].isna()][enroll_cols] # Do we want to do this?
-#     enrolled['obtain_month'] = enrolled['obtain_date'].dt.to_period('M')
-#     enrolled['Site'] = enrolled['screening_site'] + ' (' + enrolled['surgery_type'] + ')'
-#     return enrolled
-
 def enrollment_rollup(enrollment_df, index_col, grouping_cols, count_col_name, cumsum=True, fill_na_value = 0):
     enrollment_count = enrollment_df.groupby([index_col] + grouping_cols).size().reset_index(name=count_col_name).fillna({count_col_name:fill_na_value})
     if cumsum:
@@ -309,7 +303,7 @@ def get_enrollment_expectations_monthly(enrollment_expectations_df):
         expected_monthly = enrollment_expectations_df.iloc[i]['expected_monthly']
 
         months = pd.period_range(start_month,datetime.now(),freq='M').tolist()
-        expected_monthly_series = [expected_start_count] + (len(months)-1) * [expected_monthly]
+        expected_monthly_series = len(months) * [expected_monthly]
 
         for index, month in enumerate(months):
             new_row = {'mcc':mcc,
@@ -349,3 +343,15 @@ def rollup_enrollment_expectations(enrollment_df, enrollment_expectations_df, mo
     ee_rollup['Date: Month'] = ee_rollup['Month'].dt.strftime("%B")
 
     return ee_rollup
+
+def get_plot_date(enrollment_df, summary_rollup):
+    cols = ['Month', 'mcc', 'surgery_type', 'Expected: Monthly', 'Expected: Cumulative']
+    expected_data = summary_rollup[cols].copy()
+    expected_data.columns = [s.replace('Expected: ','') for s in list(expected_data.columns)]
+    expected_data['type'] = 'Expected'
+    ec= enrollment_rollup(enrollment_df, 'obtain_month', ['mcc','surgery_type'], 'Monthly').rename(columns={'obtain_month':'Month'})
+    ec['type'] = 'Actual'
+    df = ec.append(expected_data, ignore_index=True)
+    df['Month'] = df['Month'].apply(lambda x: x.to_timestamp())
+
+    return df
