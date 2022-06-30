@@ -224,7 +224,7 @@ def serve_layout():
             [
                 dbc.Row([
                     dbc.Col([
-                        html.H1('Enrollment Report (new)', style={'textAlign': 'center'})
+                        html.H1('Enrollment', style={'textAlign': 'center'})
                     ], width=12),
                 ]),
 
