@@ -19,7 +19,7 @@ from styling import *
 
 # for export
 import io
-import flask
+# import flask
 
 # Plotly graphing
 # import plotly.graph_objects as go
@@ -127,8 +127,6 @@ def serve_layout():
     subjects_json, data_source, data_date = get_subjects_json(report, report_suffix,file_url_root, mcc_list =[1,2],  DATA_PATH = DATA_PATH)
     page_meta_dict['data_source'] = data_source
     page_meta_dict['data_date'] = data_date
-    print(data_source)
-    print(data_date)
     # except:
     #     subjects_json = get_subjects_json(report, report_suffix,file_url_root, mcc_list =[1,2], source='local', DATA_PATH = DATA_PATH)
     #     page_meta_dict['data_source'] = 'loca data files'
@@ -224,7 +222,10 @@ def serve_layout():
                 dbc.Row([
                     dbc.Col([
                         html.H1('Enrollment Report', style={'textAlign': 'center'})
-                    ], width=12),
+                    ], width={"size":6, "offset":3}),
+                    dbc.Col([
+                        html.P('Version date: 06/29/2022')
+                    ], width=3),
                 ]),
 
                 dbc.Row([

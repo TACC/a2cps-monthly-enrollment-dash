@@ -351,7 +351,7 @@ def get_plot_date(enrollment_df, summary_rollup):
     expected_data['type'] = 'Expected'
     ec= enrollment_rollup(enrollment_df, 'obtain_month', ['mcc','surgery_type'], 'Monthly').rename(columns={'obtain_month':'Month'})
     ec['type'] = 'Actual'
-    df = ec.append(expected_data, ignore_index=True)
+    df = ec.append(expected_data, ignore_index=True )
     df['Month'] = df['Month'].apply(lambda x: x.to_timestamp())
 
     return df
