@@ -216,11 +216,11 @@ def get_enrolled(subjects_json, screening_sites, display_terms_dict, display_ter
         subjects_raw = combine_mcc_json(subjects_json)
         subjects_raw.reset_index(drop=True, inplace=True)
 
-        # Get enrolled subset of subjects
 
+        # Select only consented patients (obtain_date not null) who have not dropped out (ewdateterm null) and needed columns
         enrolled_cols = ['index', 'main_record_id', 'obtain_date',
             'mcc', 'redcap_data_access_group','sp_data_site']
-        enrolled = subjects_raw[subjects_raw.obtain_date != 'N/A'][enrolled_cols].copy()
+        enrolled = subjects_raw[(subjects_raw.obtain_date != 'N/A') & (subjects_raw.ewdateterm == 'N/A')][enrolled_cols].copy()
         # Rename 'index' to 'record_id'
         enrolled.rename(columns={"index": "record_id"}, inplace = True)
 
