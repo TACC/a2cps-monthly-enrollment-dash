@@ -154,7 +154,8 @@ def serve_layout():
             if len(tup_summary) > 0:
                 table_cols = ['Date: Year', 'Date: Month', 'Actual: Monthly', 'Actual: Cumulative',
                                 'Expected: Monthly', 'Expected: Cumulative', 'Percent: Monthly','Percent: Cumulative']
-                tup_stup_table_df = convert_to_multindex(tup_summary[table_cols])
+                tup_df = tup_summary.set_index('Month')[table_cols].sort_index(ascending=True)
+                tup_stup_table_df = convert_to_multindex(tup_df)
                 table_id = 'table_mcc'+ str(tup[0])+'_'+tup[1]
                 figure_id = 'figure_mcc'+ str(tup[0])+'_'+tup[1]
                 tup_table = build_datatable_multi(tup_stup_table_df, table_id)
@@ -267,6 +268,8 @@ app.layout = serve_layout
 
 if __name__ == '__main__':
     app.run_server()
-    # app.run_server(debug=True, port=8020)dev
+
+    # dev environment
+    # app.run_server(debug=True, port=8020)
 else:
     server = app.server

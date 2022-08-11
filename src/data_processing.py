@@ -13,6 +13,7 @@ import sqlite3
 import datetime
 from datetime import datetime, timedelta
 
+from collections import OrderedDict
 # import local modules
 from config_settings import *
 
@@ -79,7 +80,10 @@ def datatable_settings_multiindex(df, flatten_char = '_'):
             columns_list.append(col_id)
         df.columns = columns_list
 
-    datatable_data = df.to_dict('records')
+    dd = OrderedDict()
+    datatable_data = df.to_dict('records', into=dd)
+    #
+    # datatable_data = df.to_dict('records')
 
     return datatable_col_list, datatable_data
 
